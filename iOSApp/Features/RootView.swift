@@ -34,6 +34,12 @@ struct MainTabView: View {
         .sheet(isPresented: $appStateObserver.shouldShowAddSheet) {
             TransactionEditor(transaction: nil, initialAccountId: nil, onSave: { _ in })
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenLogsView"))) { _ in
+            AppStateObserver.shared.requestOpenLogs()
+        }
+        .sheet(isPresented: $appStateObserver.shouldOpenLogs) {
+            NavigationStack { LogsView() }
+        }
         .preferredColorScheme(colorScheme)
     }
 }

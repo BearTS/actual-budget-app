@@ -58,6 +58,21 @@ struct SettingsView: View {
                             Toggle("Enable Demo Mode", isOn: $appState.isDemoMode)
                                 .tint(AppTheme.accent)
 
+                            NavigationLink {
+                                LogsView()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "doc.text.magnifyingglass")
+                                        .foregroundColor(AppTheme.accent)
+                                    Text("View Logs")
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+
                             Button(role: .destructive) {
                                 appState.resetConfiguration()
                             } label: {
@@ -67,6 +82,7 @@ struct SettingsView: View {
                             .padding(.top)
                         }
                     }
+
                 }
                 .padding()
                 

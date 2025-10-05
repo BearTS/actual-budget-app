@@ -57,6 +57,11 @@ struct TransactionsView: View {
         }
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
+            Button("View Logs") {
+                AppLogger.shared.log("User tapped View Logs from Transactions error", level: .info, context: "TransactionsView")
+                errorMessage = nil
+                NotificationCenter.default.post(name: NSNotification.Name("OpenLogsView"), object: nil)
+            }
         } message: { Text(errorMessage ?? "") }
     }
     
@@ -115,6 +120,7 @@ struct TransactionsView: View {
             try await client().deleteTransaction(transactionId: txId)
             await loadAll()
         } catch {
+            AppLogger.shared.log(error: error, context: "TransactionsView.delete")
             await MainActor.run { errorMessage = error.localizedDescription }
         }
     }
@@ -146,6 +152,7 @@ struct TransactionsView: View {
                 transactions = list
             }
         } catch {
+            AppLogger.shared.log(error: error, context: "TransactionsView.loadAll")
             await MainActor.run { errorMessage = error.localizedDescription }
         }
     }

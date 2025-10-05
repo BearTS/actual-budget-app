@@ -50,6 +50,9 @@ targets:
   SummaryWidgetExtension:
     type: app-extension
     platform: iOS
+    configFiles:
+      Debug: Resources/Version.xcconfig
+      Release: Resources/Version.xcconfig
     sources:
       - path: SummaryWidget
       - path: Shared
@@ -71,4 +74,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: SummaryWidget/SummaryWidgetExtension.entitlements
         INFOPLIST_FILE: SummaryWidget/Info.plist
         APPLICATION_EXTENSION_API_ONLY: YES
+        MARKETING_VERSION: $(MARKETING_VERSION)
+        CURRENT_PROJECT_VERSION: $(CURRENT_PROJECT_VERSION)
 

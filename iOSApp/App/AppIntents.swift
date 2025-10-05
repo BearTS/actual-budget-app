@@ -19,9 +19,14 @@ struct AddTransactionIntent: AppIntent {
 class AppStateObserver: ObservableObject {
     static let shared = AppStateObserver()
     @Published var shouldShowAddSheet: Bool = false
+    @Published var shouldOpenLogs: Bool = false
     
     func requestAddTransaction() {
         shouldShowAddSheet = true
+    }
+
+    func requestOpenLogs() {
+        shouldOpenLogs = true
     }
 }
 
@@ -29,7 +34,9 @@ struct ActualShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AddTransactionIntent(),
-            phrases: ["Add a transaction in \(.applicationName)"]
+            phrases: ["Add a transaction in \(.applicationName)"],
+            shortTitle: "Add Transaction",
+            systemImageName: "plus.circle"
         )
     }
 }

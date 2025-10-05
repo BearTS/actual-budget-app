@@ -60,6 +60,11 @@ struct DashboardView: View {
         }
         .alert("Error", isPresented: .constant(errorMessage != nil), actions: {
             Button("OK") { errorMessage = nil }
+            Button("View Logs") {
+                AppLogger.shared.log("User tapped View Logs from Dashboard error", level: .info, context: "DashboardView")
+                errorMessage = nil
+                NotificationCenter.default.post(name: NSNotification.Name("OpenLogsView"), object: nil)
+            }
         }, message: {
             Text(errorMessage ?? "An unknown error occurred.")
         })
@@ -184,6 +189,7 @@ struct DashboardView: View {
                 transactions = txs.flatMap { $0 }
             }
         } catch {
+            AppLogger.shared.log(error: error, context: "DashboardView.load")
             await MainActor.run { errorMessage = error.localizedDescription }
         }
     }

@@ -63,6 +63,11 @@ struct AccountsView: View {
         .refreshable { await hardReload() }
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
+            Button("View Logs") {
+                AppLogger.shared.log("User tapped View Logs from Accounts error", level: .info, context: "AccountsView")
+                errorMessage = nil
+                NotificationCenter.default.post(name: NSNotification.Name("OpenLogsView"), object: nil)
+            }
         } message: {
             Text(errorMessage ?? "")
         }
@@ -140,6 +145,7 @@ struct AccountsView: View {
                 }
             }
         } catch {
+            AppLogger.shared.log(error: error, context: "AccountsView.load")
             await MainActor.run { errorMessage = error.localizedDescription }
         }
     }
