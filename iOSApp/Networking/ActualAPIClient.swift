@@ -30,7 +30,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: url, method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(AccountsListResponse.self, from: data).data
+        return try decodeOrLog(AccountsListResponse.self, from: data, request: request, context: "fetchAccounts").data
     }
 
     func fetchCategories() async throws -> [Category] {
@@ -41,7 +41,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: url, method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(CategoriesListResponse.self, from: data).data
+        return try decodeOrLog(CategoriesListResponse.self, from: data, request: request, context: "fetchCategories").data
     }
 
     func fetchPayees() async throws -> [Payee] {
@@ -52,7 +52,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: url, method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(PayeesListResponse.self, from: data).data
+        return try decodeOrLog(PayeesListResponse.self, from: data, request: request, context: "fetchPayees").data
     }
 
     func fetchTransactions(accountId: String, since: String? = nil, until: String? = nil, page: Int? = nil, limit: Int? = nil) async throws -> [Transaction] {
@@ -63,7 +63,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: try requireURL(comps), method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(TransactionsListResponse.self, from: data).data
+        return try decodeOrLog(TransactionsListResponse.self, from: data, request: request, context: "fetchTransactions").data
     }
 
     func createTransaction(accountId: String, transaction: Transaction, learnCategories: Bool = false, runTransfers: Bool = false) async throws {
@@ -105,7 +105,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: url, method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(APIResponse<BudgetMonth>.self, from: data).data
+        return try decodeOrLog(APIResponse<BudgetMonth>.self, from: data, request: request, context: "fetchBudgetMonth").data
     }
     
     func fetchBudgetMonthCategoryGroups(_ month: String) async throws -> [BudgetMonthCategoryGroup] {
@@ -116,7 +116,7 @@ final class ActualAPIClient {
         let request = try buildRequest(url: url, method: "GET")
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        return try JSONDecoder().decode(BudgetMonthCategoryGroupsResponse.self, from: data).data
+        return try decodeOrLog(BudgetMonthCategoryGroupsResponse.self, from: data, request: request, context: "fetchBudgetMonthCategoryGroups").data
     }
 
     func createAccount(name: String, offbudget: Bool) async throws -> String {
@@ -131,7 +131,7 @@ final class ActualAPIClient {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await session.data(for: request)
         try ensureSuccess(response: response, data: data)
-        let msg = try JSONDecoder().decode(GeneralResponseMessage.self, from: data)
+        let msg = try decodeOrLog(GeneralResponseMessage.self, from: data, request: request, context: "createAccount")
         return msg.message
     }
     
@@ -193,6 +193,27 @@ final class ActualAPIClient {
             let serverMessage = String(data: data, encoding: .utf8) ?? ""
             AppLogger.shared.log("HTTP Error", level: .error, context: "ActualAPIClient.ensureSuccess", metadata: ["status": http.statusCode, "body": serverMessage])
             throw APIError.httpError(status: http.statusCode, body: serverMessage)
+        }
+    }
+
+    private func decodeOrLog<T: Decodable>(_ type: T.Type, from data: Data, request: URLRequest, context: String) throws -> T {
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            // Build minimal request context without base URL
+            var md: [String: Any] = ["context": context]
+            if let url = request.url {
+                let full = url.absoluteString
+                let base = baseURL.absoluteString
+                let path = full.hasPrefix(base) ? String(full.dropFirst(base.count)) : (URLComponents(url: url, resolvingAgainstBaseURL: false)?.url?.path ?? full)
+                md["method"] = request.httpMethod ?? ""
+                md["path"] = path
+            }
+            let sample = String(data: data.prefix(4096), encoding: .utf8) ?? "<non-utf8>"
+            md["responseSample"] = sample
+            md["decodeError"] = String(describing: error)
+            AppLogger.shared.log("Decode Error", level: .error, context: "ActualAPIClient", metadata: md)
+            throw error
         }
     }
 

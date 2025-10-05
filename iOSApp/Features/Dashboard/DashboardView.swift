@@ -94,8 +94,18 @@ struct DashboardView: View {
                 VStack(spacing: 12) {
                     ForEach(recent, id: \.id) { tx in
                         transactionRow(tx)
-                            .onTapGesture {
-                                activeSheet = .edit(tx)
+                            .onTapGesture { activeSheet = .edit(tx) }
+                            .contextMenu {
+                                Button {
+                                    activeSheet = .edit(tx)
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Button(role: .destructive) {
+                                    Task { await delete(tx) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
                     }
                 }
@@ -260,5 +270,19 @@ struct DashboardView: View {
         if let payeeId = tx.payee, let p = payeesById[payeeId] { return p.name }
         if let n = tx.payee_name, !n.isEmpty { return n }
         return "(No payee)"
+    }
+
+    private func delete(_ tx: Transaction) async {
+        guard let txId = tx.id else { return }
+        // Optimistically remove from local list
+        await MainActor.run {
+            transactions.removeAll { $0.id == txId }
+        }
+        do {
+            try await client().deleteTransaction(transactionId: txId)
+        } catch {
+            AppLogger.shared.log(error: error, context: "DashboardView.delete")
+            await MainActor.run { errorMessage = error.localizedDescription }
+        }
     }
 }
