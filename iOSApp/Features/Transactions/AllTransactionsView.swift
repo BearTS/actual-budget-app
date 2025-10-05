@@ -48,10 +48,15 @@ struct AllTransactionsView: View {
                     .listRowInsets(EdgeInsets())
 
                 ForEach(listTransactions, id: \.id) { tx in
-                    transactionRow(tx)
-                        .onTapGesture {
-                            activeSheet = .edit(tx)
-                        }
+                    TransactionRow(
+                        transaction: tx,
+                        accounts: accounts,
+                        payeesById: payeesById,
+                        categoriesById: categoriesById,
+                        currencyCode: appState.currencyCode,
+                        onEdit: { t in activeSheet = .edit(t) },
+                        onDelete: { t in Task { await delete(t) } }
+                    )
                 }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -80,6 +85,19 @@ struct AllTransactionsView: View {
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
         } message: { Text(errorMessage ?? "") }
+    }
+
+    private func delete(_ tx: Transaction) async {
+        guard let id = tx.id else { return }
+        await MainActor.run {
+            transactions.removeAll { $0.id == id }
+        }
+        do {
+            try await client().deleteTransaction(transactionId: id)
+        } catch {
+            AppLogger.shared.log(error: error, context: "AllTransactionsView.delete")
+            await MainActor.run { errorMessage = error.localizedDescription }
+        }
     }
     
     private func transactionRow(_ tx: Transaction) -> some View {

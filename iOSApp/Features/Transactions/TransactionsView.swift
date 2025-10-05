@@ -20,16 +20,16 @@ struct TransactionsView: View {
             AppBackground()
             List {
                 ForEach(sortedTransactions, id: \.id) { tx in
-                    transactionRow(tx)
-                        .onTapGesture {
-                            activeSheet = .edit(tx)
-                        }
-                        .contextMenu { contextMenuItems(for: tx) }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                Task { await delete(tx) }
-                            } label: { Label("Delete", systemImage: "trash") }
-                        }
+                    TransactionRow(
+                        transaction: tx,
+                        accounts: accounts,
+                        payeesById: payeesById,
+                        categoriesById: categoriesById,
+                        currencyCode: appState.currencyCode,
+                        onEdit: { t in activeSheet = .edit(t) },
+                        onDelete: { t in Task { await delete(t) } }
+                    )
+                    .contextMenu { contextMenuItems(for: tx) }
                 }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)

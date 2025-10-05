@@ -174,7 +174,10 @@ struct AccountsView: View {
             req.setValue(appState.apiKey, forHTTPHeaderField: "x-api-key")
             if !appState.budgetEncryptionPassword.isEmpty { req.setValue(appState.budgetEncryptionPassword, forHTTPHeaderField: "budget-encryption-password") }
             let (data, resp) = try await URLSession.shared.data(for: req)
-            guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw URLError(.badServerResponse) }
+            if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                NetworkLogger.logHTTPError(method: "GET", url: url, baseURLString: appState.baseURLString, status: http.statusCode, body: data)
+                throw URLError(.badServerResponse)
+            }
             let decoded = try JSONDecoder().decode(APIResponse<Int>.self, from: data)
             return decoded.data
         }

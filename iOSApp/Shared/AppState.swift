@@ -10,13 +10,16 @@ final class AppState: ObservableObject {
         var id: String { self.rawValue }
     }
     
-    @Published var currentTheme: Theme {
+    @Published var currentTheme: Theme {    
         didSet { UserDefaults.standard.set(currentTheme.rawValue, forKey: Keys.currentTheme) }
     }
     
     // Other properties...
     @Published var baseURLString: String {
-        didSet { UserDefaults.standard.set(baseURLString, forKey: Keys.baseURL) }
+        didSet {
+            UserDefaults.standard.set(baseURLString, forKey: Keys.baseURL)
+            AppLogger.shared.updateRedactionBaseURL(baseURLString)
+        }
     }
     @Published var apiKey: String {
         didSet { UserDefaults.standard.set(apiKey, forKey: Keys.apiKey) }
@@ -46,6 +49,7 @@ final class AppState: ObservableObject {
         
         let savedTheme = UserDefaults.standard.string(forKey: Keys.currentTheme) ?? ""
         self.currentTheme = Theme(rawValue: savedTheme) ?? .amoledDark
+        AppLogger.shared.updateRedactionBaseURL(self.baseURLString)
     }
 
     func resetConfiguration() {

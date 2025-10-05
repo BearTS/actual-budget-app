@@ -191,7 +191,11 @@ final class ActualAPIClient {
         guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         guard (200..<300).contains(http.statusCode) else {
             let serverMessage = String(data: data, encoding: .utf8) ?? ""
-            AppLogger.shared.log("HTTP Error", level: .error, context: "ActualAPIClient.ensureSuccess", metadata: ["status": http.statusCode, "body": serverMessage])
+            if let req = (response as? HTTPURLResponse)?.url {
+                NetworkLogger.logHTTPError(method: "", url: req, baseURLString: baseURL.absoluteString, status: http.statusCode, body: data)
+            } else {
+                AppLogger.shared.log("HTTP Error", level: .error, context: "ActualAPIClient.ensureSuccess", metadata: ["status": http.statusCode, "body": serverMessage])
+            }
             throw APIError.httpError(status: http.statusCode, body: serverMessage)
         }
     }

@@ -11,11 +11,14 @@ final class AppLogger {
 
     private let ioQueue = DispatchQueue(label: "app.logger.io.queue")
     private let fileURL: URL
+    private var redactionBaseURLString: String?
 
     private init() {
         let fm = FileManager.default
         let dir = fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
         fileURL = dir.appendingPathComponent("app.log")
+        // Try to seed redaction base from stored settings
+        redactionBaseURLString = UserDefaults.standard.string(forKey: "ActualBaseURL")
         rotateIfNeeded()
     }
 
@@ -34,8 +37,9 @@ final class AppLogger {
     func log(error: Error, context: String? = nil, metadata: [String: Any]? = nil) {
         var md = metadata ?? [:]
         md["errorType"] = String(describing: type(of: error))
-        md["localizedDescription"] = error.localizedDescription
-        log(String(describing: error), level: .error, context: context, metadata: md)
+        md["localizedDescription"] = redact(error.localizedDescription)
+        let message = redact(String(describing: error))
+        log(message, level: .error, context: context, metadata: md)
     }
 
     func readLogText() -> String {
@@ -52,6 +56,10 @@ final class AppLogger {
     }
 
     var logFileURL: URL { fileURL }
+
+    func updateRedactionBaseURL(_ baseURLString: String?) {
+        redactionBaseURLString = baseURLString
+    }
 
     private func write(_ record: [String: Any]) {
         ioQueue.async {
@@ -81,6 +89,11 @@ final class AppLogger {
             try? FileManager.default.moveItem(at: self.fileURL, to: backupURL)
             FileManager.default.createFile(atPath: self.fileURL.path, contents: nil)
         }
+    }
+
+    private func redact(_ text: String) -> String {
+        guard let base = redactionBaseURLString, !base.isEmpty else { return text }
+        return text.replacingOccurrences(of: base, with: "<redacted>")
     }
 }
 
