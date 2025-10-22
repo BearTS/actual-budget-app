@@ -178,7 +178,7 @@ struct TransactionsView: View {
 
     private func payeeText(_ tx: Transaction) -> String {
         if let account = transferDestinationAccount(tx) {
-            return "Transfer to: \(account.name)"
+            return "Transfer \((tx.amount ?? 0) < 0 ? "to" : "from"): \(account.name)"
         }
         if let payeeId = tx.payee, let p = payeesById[payeeId] { return p.name }
         if let n = tx.payee_name, !n.isEmpty { return n }

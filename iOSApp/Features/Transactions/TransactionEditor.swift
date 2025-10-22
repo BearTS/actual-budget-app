@@ -19,6 +19,7 @@ struct TransactionEditor: View {
     @State private var amountString: String
     @State private var isNegative: Bool
     @State private var selectedPayeeId: String
+    @State private var selectedTransferId: String?
     @State private var customPayee: String
     @State private var payeeMode: PayeeInputMode
     @State private var notes: String
@@ -40,6 +41,7 @@ struct TransactionEditor: View {
                 _selectedPayeeId = State(initialValue: payeeId)
                 _payeeMode = State(initialValue: .picker)
                 _customPayee = State(initialValue: "")
+                _selectedTransferId = State(initialValue: t.transfer_id)
             } else if let payeeName = t.payee_name, !payeeName.isEmpty {
                 _customPayee = State(initialValue: payeeName)
                 _payeeMode = State(initialValue: .custom)
@@ -64,6 +66,7 @@ struct TransactionEditor: View {
             _notes = State(initialValue: "")
             _categoryId = State(initialValue: nil)
             _selectedAccountId = State(initialValue: initialAccountId ?? "")
+            _selectedTransferId = State(initialValue: nil)
         }
     }
 
@@ -131,6 +134,9 @@ struct TransactionEditor: View {
                             Text(payee.name).tag(payee.id)
                         }
                     }
+                    .onChange(of: selectedPayeeId) { oldValue, newValue in
+                        selectedTransferId = payees.first(where: { $0.id == newValue })?.transfer_acct
+                    }
                 } else {
                     TextField("Payee Name", text: $customPayee)
                 }
@@ -154,6 +160,7 @@ struct TransactionEditor: View {
         let signed = isNegative ? -abs(units) : abs(units)
         
         let payeeId: String? = payeeMode == .picker ? (selectedPayeeId.isEmpty ? nil : selectedPayeeId) : nil
+        let transferId: String? = selectedTransferId
         let payeeName: String? = payeeMode == .custom ? (customPayee.isEmpty ? nil : customPayee) : nil
         
         return Transaction(
@@ -166,7 +173,9 @@ struct TransactionEditor: View {
             imported_payee: nil,
             category: categoryId,
             notes: notes.isEmpty ? nil : notes,
-            imported_id: nil, transfer_id: nil, cleared: false, subtransactions: nil
+            imported_id: nil,
+            transfer_id: transferId,
+            cleared: false, subtransactions: nil
         )
     }
 
@@ -177,7 +186,7 @@ struct TransactionEditor: View {
                 if let id = built.id {
                     try await client().updateTransaction(transactionId: id, transaction: built)
                 } else {
-                    try await client().createTransaction(accountId: built.account, transaction: built)
+                    try await client().createTransaction(accountId: built.account, transaction: built, runTransfers: (built.transfer_id != nil))
                 }
                 onSave(built)
                 dismiss()
