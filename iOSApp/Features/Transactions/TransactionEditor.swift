@@ -160,7 +160,6 @@ struct TransactionEditor: View {
         let signed = isNegative ? -abs(units) : abs(units)
         
         let payeeId: String? = payeeMode == .picker ? (selectedPayeeId.isEmpty ? nil : selectedPayeeId) : nil
-        let transferId: String? = selectedTransferId
         let payeeName: String? = payeeMode == .custom ? (customPayee.isEmpty ? nil : customPayee) : nil
         
         return Transaction(
@@ -174,7 +173,7 @@ struct TransactionEditor: View {
             category: categoryId,
             notes: notes.isEmpty ? nil : notes,
             imported_id: nil,
-            transfer_id: transferId,
+            transfer_id: selectedTransferId,
             cleared: false, subtransactions: nil
         )
     }
