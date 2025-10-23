@@ -41,7 +41,6 @@ struct TransactionEditor: View {
                 _selectedPayeeId = State(initialValue: payeeId)
                 _payeeMode = State(initialValue: .picker)
                 _customPayee = State(initialValue: "")
-                _selectedTransferId = State(initialValue: t.transfer_id)
             } else if let payeeName = t.payee_name, !payeeName.isEmpty {
                 _customPayee = State(initialValue: payeeName)
                 _payeeMode = State(initialValue: .custom)
@@ -55,6 +54,7 @@ struct TransactionEditor: View {
             _notes = State(initialValue: t.notes ?? "")
             _categoryId = State(initialValue: t.category)
             _selectedAccountId = State(initialValue: t.account)
+            _selectedTransferId = State(initialValue: t.transfer_id)
         } else {
             // Creating a new transaction: Initialize with default values
             _date = State(initialValue: Date())
