@@ -52,7 +52,7 @@ struct TransactionRow: View {
 
     private func primaryText() -> String {
         if let account = transferDestinationAccount(transaction) {
-            return "Transfer to: \(account.name)"
+            return "Transfer \((transaction.amount ?? 0) < 0 ? "to" : "from"): \(account.name)"
         }
         if let payeeId = transaction.payee, let p = payeesById[payeeId] { return p.name }
         if let n = transaction.payee_name, !n.isEmpty { return n }

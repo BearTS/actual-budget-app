@@ -19,6 +19,7 @@ struct TransactionEditor: View {
     @State private var amountString: String
     @State private var isNegative: Bool
     @State private var selectedPayeeId: String
+    @State private var selectedTransferId: String?
     @State private var customPayee: String
     @State private var payeeMode: PayeeInputMode
     @State private var notes: String
@@ -53,6 +54,7 @@ struct TransactionEditor: View {
             _notes = State(initialValue: t.notes ?? "")
             _categoryId = State(initialValue: t.category)
             _selectedAccountId = State(initialValue: t.account)
+            _selectedTransferId = State(initialValue: t.transfer_id)
         } else {
             // Creating a new transaction: Initialize with default values
             _date = State(initialValue: Date())
@@ -64,6 +66,7 @@ struct TransactionEditor: View {
             _notes = State(initialValue: "")
             _categoryId = State(initialValue: nil)
             _selectedAccountId = State(initialValue: initialAccountId ?? "")
+            _selectedTransferId = State(initialValue: nil)
         }
     }
 
@@ -131,6 +134,9 @@ struct TransactionEditor: View {
                             Text(payee.name).tag(payee.id)
                         }
                     }
+                    .onChange(of: selectedPayeeId) { oldValue, newValue in
+                        selectedTransferId = payees.first(where: { $0.id == newValue })?.transfer_acct
+                    }
                 } else {
                     TextField("Payee Name", text: $customPayee)
                 }
@@ -166,7 +172,9 @@ struct TransactionEditor: View {
             imported_payee: nil,
             category: categoryId,
             notes: notes.isEmpty ? nil : notes,
-            imported_id: nil, transfer_id: nil, cleared: false, subtransactions: nil
+            imported_id: nil,
+            transfer_id: selectedTransferId,
+            cleared: false, subtransactions: nil
         )
     }
 
@@ -177,7 +185,7 @@ struct TransactionEditor: View {
                 if let id = built.id {
                     try await client().updateTransaction(transactionId: id, transaction: built)
                 } else {
-                    try await client().createTransaction(accountId: built.account, transaction: built)
+                    try await client().createTransaction(accountId: built.account, transaction: built, runTransfers: (built.transfer_id != nil))
                 }
                 onSave(built)
                 dismiss()
