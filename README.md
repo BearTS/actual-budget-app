@@ -52,13 +52,14 @@ A modern, native iOS app for managing your personal finances with the Actual Bud
 
 ### Prerequisites
 1. Clone this repository
-2. Open `iOSApp/ActualAccounts.xcodeproj` in Xcode
-3. Ensure you have a valid Apple Developer account for device testing
+2. Run `make` to generate project files
+3. Open `iOSApp/ActualAccounts.xcodeproj` in Xcode
+4. Ensure you have a valid Apple Developer account for device testing
 
 ### Setup
 1. **Configure Actual Budget Backend**:
-   - Set up your Actual Budget server and [Actual Http API]((https://github.com/jhonderson/actual-http-api) )
-   - Note your API endpoint, API key, and sync ID
+   - Set up your [Actual Budget server](https://actualbudget.org/docs/install/) and [Actual Http API](https://github.com/jhonderson/actual-http-api)
+   - Note your API endpoint, API key, and Sync ID
 
 2. **App Configuration**:
    - Launch the app
@@ -89,8 +90,6 @@ The app integrates with the Actual Budget API to provide real-time financial dat
 
 1. Open a terminal and run `make` in the project root directory. This will build the iOS app and generate an unsigned `.ipa` file.
 2. After the build completes, you can find the unsigned IPA at `iOSApp/build/ActualAccounts-unsigned.ipa`.
-
-
 
 ## Contributing
 
